@@ -75,6 +75,14 @@ You are only charged for coins actually returned. Apify platform usage is billed
 - **Trading research & bots** - feed market data into strategies
 - **Market analysis** - rank coins by cap, volume, and momentum
 
+## How to Scrape CoinGecko (Step by Step)
+
+1. Click **Try for free** / **Run**.
+2. Enter the coins you want: add CoinGecko coin IDs (e.g. `bitcoin`, `ethereum`) or `searchQueries`, or set `topCoins` to pull the market leaders.
+3. Pick your quote currency in `vsCurrency` (e.g. `usd`, `eur`, `inr`, `btc`).
+4. Run the Actor (start with a small `topCoins` value to test).
+5. Export the results as JSON, CSV, Excel, or HTML, or pull them via the Apify API.
+
 ## Tips
 
 - Coin IDs are CoinGecko's slugs (e.g. `bitcoin`, not `BTC`) - use `searchQueries` if unsure.
