@@ -1,0 +1,64 @@
+{
+  "actorSpecification": 1,
+  "name": "coingecko-crypto-scraper",
+  "title": "CoinGecko Crypto Scraper - Prices & Market Data",
+  "description": "Scrape cryptocurrency market data from CoinGecko: prices, market cap, rank, volume, 24h change, supply, ATH/ATL. By coin, search, or top by market cap. No API key needed.",
+  "version": "1.0",
+  "categories": ["BUSINESS", "DEVELOPER_TOOLS"],
+  "dockerfile": "Dockerfile",
+  "input": "../INPUT_SCHEMA.json",
+  "storages": {
+    "dataset": {
+      "actorSpecification": 1,
+      "views": {
+        "coins": {
+          "title": "Coins",
+          "transformation": {
+            "fields": ["marketCapRank", "name", "symbol", "currentPrice", "vsCurrency", "marketCap", "totalVolume", "priceChangePercentage24h", "high24h", "low24h", "circulatingSupply", "maxSupply", "ath", "athDate", "atl", "lastUpdated", "scrapedAt"]
+          },
+          "display": {
+            "component": "table",
+            "properties": {
+              "marketCapRank": { "label": "Rank", "format": "number" },
+              "name": { "label": "Name", "format": "text" },
+              "symbol": { "label": "Symbol", "format": "text" },
+              "currentPrice": { "label": "Price", "format": "number" },
+              "vsCurrency": { "label": "Currency", "format": "text" },
+              "marketCap": { "label": "Market Cap", "format": "number" },
+              "totalVolume": { "label": "Volume 24h", "format": "number" },
+              "priceChangePercentage24h": { "label": "Change 24h %", "format": "number" },
+              "high24h": { "label": "High 24h", "format": "number" },
+              "low24h": { "label": "Low 24h", "format": "number" },
+              "circulatingSupply": { "label": "Circulating", "format": "number" },
+              "maxSupply": { "label": "Max Supply", "format": "number" },
+              "ath": { "label": "ATH", "format": "number" },
+              "athDate": { "label": "ATH Date", "format": "date" },
+              "atl": { "label": "ATL", "format": "number" },
+              "lastUpdated": { "label": "Last Updated", "format": "date" },
+              "scrapedAt": { "label": "Scraped At", "format": "text" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "pricingInfo": {
+    "pricingModel": "PAY_PER_EVENT",
+    "pricingPerEvent": {
+      "actorChargeEvents": {
+        "coin-scraped": {
+          "eventTitle": "Coin Scraped",
+          "eventDescription": "Charged for each cryptocurrency's market data extracted and saved to the dataset.",
+          "eventPriceUsd": 0.001
+        }
+      }
+    }
+  },
+  "defaultRunOptions": {
+    "build": "latest",
+    "memoryMbytes": 512,
+    "timeoutSecs": 3600
+  },
+  "minMemoryMbytes": 256,
+  "maxMemoryMbytes": 2048
+}

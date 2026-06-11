@@ -1,0 +1,53 @@
+{
+  "title": "CoinGecko Crypto Scraper",
+  "description": "Scrape cryptocurrency market data from CoinGecko by coin ID, search query, or top coins by market cap. No API key required (optional Demo key for higher limits).",
+  "type": "object",
+  "schemaVersion": 1,
+  "properties": {
+    "coinIds": {
+      "title": "Coin IDs",
+      "description": "CoinGecko coin IDs (e.g. \"bitcoin\", \"ethereum\", \"solana\").",
+      "type": "array",
+      "editor": "stringList",
+      "default": []
+    },
+    "searchQueries": {
+      "title": "Search Queries",
+      "description": "Coin names/symbols to look up and resolve to coin IDs (e.g. \"bitcoin\", \"doge\").",
+      "type": "array",
+      "editor": "stringList",
+      "default": []
+    },
+    "topCoins": {
+      "title": "Top Coins by Market Cap",
+      "description": "Number of top coins (by market cap) to scrape. Set to 0 to scrape only the specified coins/searches.",
+      "type": "integer",
+      "editor": "number",
+      "prefill": 100,
+      "default": 100,
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "vsCurrency": {
+      "title": "Quote Currency",
+      "description": "Currency to quote prices in (e.g. \"usd\", \"eur\", \"inr\", \"btc\").",
+      "type": "string",
+      "editor": "textfield",
+      "default": "usd"
+    },
+    "apiKey": {
+      "title": "CoinGecko API Key (optional)",
+      "description": "A CoinGecko Demo API key raises rate limits. Leave empty to use the free public API.",
+      "type": "string",
+      "editor": "textfield",
+      "isSecret": true
+    },
+    "proxyConfiguration": {
+      "title": "Proxy Configuration",
+      "description": "Proxy settings. Rotating proxies help avoid the free API's rate limits on large runs.",
+      "type": "object",
+      "editor": "proxy",
+      "default": { "useApifyProxy": true }
+    }
+  }
+}
