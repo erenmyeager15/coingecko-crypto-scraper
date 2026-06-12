@@ -18,13 +18,22 @@
       "editor": "stringList",
       "default": []
     },
+    "maxSearchResults": {
+      "title": "Max Results per Search",
+      "description": "Maximum number of relevant CoinGecko matches selected for each search query.",
+      "type": "integer",
+      "editor": "number",
+      "default": 5,
+      "minimum": 1,
+      "maximum": 50
+    },
     "topCoins": {
       "title": "Top Coins by Market Cap",
       "description": "Number of top coins (by market cap) to scrape. Set to 0 to scrape only the specified coins/searches.",
       "type": "integer",
       "editor": "number",
-      "prefill": 100,
-      "default": 100,
+      "prefill": 10,
+      "default": 10,
       "minimum": 0,
       "maximum": 10000
     },
@@ -44,10 +53,10 @@
     },
     "proxyConfiguration": {
       "title": "Proxy Configuration",
-      "description": "Proxy settings. Rotating proxies help avoid the free API's rate limits on large runs.",
+      "description": "Optional proxy settings. Keep disabled for normal runs; enable rotation only when rate limits require it.",
       "type": "object",
       "editor": "proxy",
-      "default": { "useApifyProxy": true }
+      "default": { "useApifyProxy": false }
     }
   }
 }

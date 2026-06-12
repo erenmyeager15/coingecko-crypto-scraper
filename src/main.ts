@@ -9,7 +9,8 @@ const input = ((await Actor.getInput<ActorInput>()) ?? {}) as ActorInput;
 const {
     coinIds = [],
     searchQueries = [],
-    topCoins = 100,
+    maxSearchResults = 5,
+    topCoins = 10,
     vsCurrency = 'usd',
     apiKey = '',
     proxyConfiguration: proxyInput,
@@ -33,7 +34,7 @@ const baseHost = 'https://api.coingecko.com/api/v3';
 const headers: Record<string, string> = { 'User-Agent': 'apify-coingecko-scraper', Accept: 'application/json' };
 if (apiKey) headers['x-cg-demo-api-key'] = apiKey.trim();
 
-async function ghFetch(path: string): Promise<any> {
+async function cgFetch(path: string): Promise<any> {
     const url = `${baseHost}${path}`;
     for (let attempt = 0; attempt < 5; attempt++) {
         let dispatcher: ProxyAgent | undefined;
@@ -63,10 +64,11 @@ async function ghFetch(path: string): Promise<any> {
 // Resolve search queries -> coin ids.
 const allIds = new Set<string>(ids);
 for (const q of queries) {
-    const data = await ghFetch(`/search?query=${encodeURIComponent(q)}`);
+    const data = await cgFetch(`/search?query=${encodeURIComponent(q)}`);
     const coins: any[] = data?.coins ?? [];
-    for (const c of coins) if (c.id) allIds.add(c.id);
-    log.info(`Search "${q}" -> ${coins.length} coins`);
+    const matches = coins.slice(0, Math.max(1, Math.min(maxSearchResults, 50)));
+    for (const c of matches) if (c.id) allIds.add(c.id);
+    log.info(`Search "${q}" -> ${matches.length} selected coin(s) from ${coins.length} match(es)`);
 }
 
 let scraped = 0;
@@ -86,7 +88,7 @@ async function pushCoins(list: any[]): Promise<void> {
 const idArray = [...allIds];
 for (let i = 0; i < idArray.length; i += 250) {
     const batch = idArray.slice(i, i + 250);
-    const data = await ghFetch(`/coins/markets?vs_currency=${vs}&ids=${batch.join(',')}&order=market_cap_desc&per_page=250&page=1&price_change_percentage=24h`);
+    const data = await cgFetch(`/coins/markets?vs_currency=${vs}&ids=${batch.join(',')}&order=market_cap_desc&per_page=250&page=1&price_change_percentage=24h`);
     if (Array.isArray(data)) await pushCoins(data);
     log.info(`Fetched ${batch.length} requested coin(s)`);
 }
@@ -96,7 +98,7 @@ if (topCoins && topCoins > 0) {
     const perPage = 250;
     const pages = Math.ceil(Math.min(topCoins, 10000) / perPage);
     for (let page = 1; page <= pages; page++) {
-        const data = await ghFetch(`/coins/markets?vs_currency=${vs}&order=market_cap_desc&per_page=${perPage}&page=${page}&price_change_percentage=24h`);
+        const data = await cgFetch(`/coins/markets?vs_currency=${vs}&order=market_cap_desc&per_page=${perPage}&page=${page}&price_change_percentage=24h`);
         if (!Array.isArray(data) || data.length === 0) break;
         const slice = data.slice(0, Math.max(0, topCoins - (page - 1) * perPage));
         await pushCoins(slice);

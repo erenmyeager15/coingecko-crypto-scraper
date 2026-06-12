@@ -4,7 +4,7 @@
   "title": "CoinGecko Crypto Scraper - Prices & Market Data",
   "description": "Scrape cryptocurrency market data from CoinGecko: prices, market cap, rank, volume, 24h change, supply, ATH/ATL. By coin, search, or top by market cap. No API key needed.",
   "version": "1.0",
-  "categories": ["BUSINESS", "DEVELOPER_TOOLS"],
+  "categories": ["DEVELOPER_TOOLS", "AUTOMATION", "OTHER"],
   "dockerfile": "Dockerfile",
   "input": "../INPUT_SCHEMA.json",
   "storages": {
@@ -14,12 +14,14 @@
         "coins": {
           "title": "Coins",
           "transformation": {
-            "fields": ["marketCapRank", "name", "symbol", "currentPrice", "vsCurrency", "marketCap", "totalVolume", "priceChangePercentage24h", "high24h", "low24h", "circulatingSupply", "maxSupply", "ath", "athDate", "atl", "lastUpdated", "scrapedAt"]
+            "fields": ["imageUrl", "marketCapRank", "id", "name", "symbol", "currentPrice", "vsCurrency", "marketCap", "totalVolume", "priceChangePercentage24h", "high24h", "low24h", "circulatingSupply", "maxSupply", "ath", "athDate", "atl", "lastUpdated", "scrapedAt"]
           },
           "display": {
             "component": "table",
             "properties": {
+              "imageUrl": { "label": "Image", "format": "image" },
               "marketCapRank": { "label": "Rank", "format": "number" },
+              "id": { "label": "Coin ID", "format": "text" },
               "name": { "label": "Name", "format": "text" },
               "symbol": { "label": "Symbol", "format": "text" },
               "currentPrice": { "label": "Price", "format": "number" },

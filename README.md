@@ -1,35 +1,41 @@
-# CoinGecko Crypto Scraper - Prices & Market Data
+# CoinGecko Crypto Scraper - Prices and Market Data
 
-Scrape **cryptocurrency market data from CoinGecko** - no API key required. Get live prices, market cap, rank, 24-hour volume and change, circulating/total/max supply, and all-time high/low for any coin. Scrape specific coins, search by name, or pull the top coins by market cap, in any quote currency. Export to **JSON, CSV, Excel, or HTML**, or pull via the Apify API.
+Collect structured cryptocurrency market data from CoinGecko. Scrape specific CoinGecko coin IDs, resolve coin names or symbols through search, or retrieve the leading cryptocurrencies by market capitalization.
 
-Perfect for **crypto dashboards, portfolio tracking, trading bots, and market research**.
+The Actor returns current price, market cap, rank, 24-hour volume and price movement, supply data, all-time high and low, image URL, and source timestamps. It uses CoinGecko's public API and supports an optional Demo API key for higher limits.
 
 ## Features
 
-- ✅ **No API key needed** - uses CoinGecko's free public API (optional key for higher limits)
-- ✅ **Three modes** - specific coin IDs, search queries, or top-N by market cap
-- ✅ **Any quote currency** - USD, EUR, INR, BTC, and more
-- ✅ **Rich data** - price, market cap, rank, volume, 24h change, supply, ATH/ATL
-- ✅ **Fast & lightweight** - pure API, no headless browser
+- Specific coin IDs such as `bitcoin`, `ethereum`, and `solana`
+- Coin search with a configurable match limit
+- Top cryptocurrencies ranked by market cap
+- Quote currencies including USD, EUR, INR, and BTC
+- Automatic deduplication across all input modes
+- Optional proxy rotation for rate-limited large runs
+- Pay only after a clean coin record is saved
 
 ## Input
 
-| Parameter | Type | Description | Default |
-|-----------|------|-------------|---------|
-| `coinIds` | `string[]` | CoinGecko coin IDs (e.g. `"bitcoin"`, `"ethereum"`) | `[]` |
-| `searchQueries` | `string[]` | Names/symbols to resolve to coin IDs | `[]` |
-| `topCoins` | `integer` | Top N coins by market cap (`0` = only specified) | `100` |
-| `vsCurrency` | `string` | Quote currency (`usd`, `eur`, `inr`, `btc`) | `usd` |
-| `apiKey` | `string` (secret) | Optional CoinGecko Demo API key | — |
-| `proxyConfiguration` | `object` | Proxy settings | Apify Proxy |
-
-### Example input
+| Field | Description | Default |
+|---|---|---|
+| `coinIds` | CoinGecko coin IDs | `[]` |
+| `searchQueries` | Coin names or symbols to search | `[]` |
+| `maxSearchResults` | Maximum selected matches per search query | `5` |
+| `topCoins` | Number of leading coins by market cap | `10` |
+| `vsCurrency` | Quote currency | `usd` |
+| `apiKey` | Optional CoinGecko Demo API key | None |
+| `proxyConfiguration` | Optional proxy rotation | Disabled |
 
 ```json
 {
-  "coinIds": ["bitcoin", "ethereum", "solana"],
-  "topCoins": 250,
-  "vsCurrency": "usd"
+  "coinIds": ["solana"],
+  "searchQueries": ["dogecoin"],
+  "maxSearchResults": 2,
+  "topCoins": 5,
+  "vsCurrency": "usd",
+  "proxyConfiguration": {
+    "useApifyProxy": false
+  }
 }
 ```
 
@@ -53,41 +59,39 @@ Perfect for **crypto dashboards, portfolio tracking, trading bots, and market re
   "ath": 293.31,
   "athDate": "2025-01-19T11:15:27.957Z",
   "atl": 0.500801,
-  "lastUpdated": "2026-06-11T06:31:09.541Z",
-  "scrapedAt": "2026-06-11T06:31:10.370Z"
+  "imageUrl": "https://coin-images.coingecko.com/coins/images/...",
+  "lastUpdated": "2026-06-12T16:00:00.000Z",
+  "scrapedAt": "2026-06-12T16:00:01.000Z"
 }
 ```
 
-## Pricing
+## How to scrape CoinGecko data
 
-This Actor uses **pay-per-result** pricing:
-
-| Event | Price |
-|-------|-------|
-| Per coin scraped | **$0.001** ($1 / 1,000 coins) |
-
-You are only charged for coins actually returned. Apify platform usage is billed separately by Apify.
+1. Add coin IDs, search queries, or set `topCoins`.
+2. Choose the quote currency.
+3. Leave proxy rotation disabled for normal API runs.
+4. Add a CoinGecko Demo API key for larger workloads when needed.
+5. Run the Actor and export the dataset as JSON, CSV, Excel, or another supported format.
 
 ## Use cases
 
-- **Crypto dashboards** - power price tables and market overviews
-- **Portfolio tracking** - pull live valuations on a schedule
-- **Trading research & bots** - feed market data into strategies
-- **Market analysis** - rank coins by cap, volume, and momentum
+- Cryptocurrency dashboards and market tables
+- Portfolio valuation and scheduled price monitoring
+- Trading and quantitative research
+- Market-cap, volume, and momentum analysis
+- Historical ATH and ATL reference datasets
 
-## How to Scrape CoinGecko (Step by Step)
+## Pricing
 
-1. Click **Try for free** / **Run**.
-2. Enter the coins you want: add CoinGecko coin IDs (e.g. `bitcoin`, `ethereum`) or `searchQueries`, or set `topCoins` to pull the market leaders.
-3. Pick your quote currency in `vsCurrency` (e.g. `usd`, `eur`, `inr`, `btc`).
-4. Run the Actor (start with a small `topCoins` value to test).
-5. Export the results as JSON, CSV, Excel, or HTML, or pull them via the Apify API.
+| Event | Price |
+|---|---|
+| `coin-scraped` | $0.001 per successfully saved coin |
 
-## Tips
+The Actor charges only for records written to the dataset. Apify platform usage is billed separately.
 
-- Coin IDs are CoinGecko's slugs (e.g. `bitcoin`, not `BTC`) - use `searchQueries` if unsure.
-- Set `topCoins` to grab the market leaders, and add `coinIds` for specific extras.
-- Add a free CoinGecko **Demo API key** for higher rate limits on large runs.
+## Data source
+
+Market data is provided by CoinGecko. Users are responsible for following CoinGecko's API terms, attribution requirements, and applicable usage limits.
 
 ## License
 

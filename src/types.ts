@@ -1,6 +1,7 @@
 export interface ActorInput {
     coinIds?: string[];
     searchQueries?: string[];
+    maxSearchResults?: number;
     topCoins?: number;
     vsCurrency?: string;
     apiKey?: string;

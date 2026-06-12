@@ -1,7 +1,8 @@
 {
   "coinIds": ["solana"],
   "searchQueries": ["dogecoin"],
+  "maxSearchResults": 2,
   "topCoins": 5,
   "vsCurrency": "usd",
-  "proxyConfiguration": { "useApifyProxy": true }
+  "proxyConfiguration": { "useApifyProxy": false }
 }
