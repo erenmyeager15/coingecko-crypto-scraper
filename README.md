@@ -93,6 +93,12 @@ The Actor charges only for records written to the dataset. Apify platform usage 
 
 Market data is provided by CoinGecko. Users are responsible for following CoinGecko's API terms, attribution requirements, and applicable usage limits.
 
+## Responsible Use
+
+This Actor is intended for lawful collection of publicly available information only. Users are responsible for ensuring their use complies with the source website's terms, robots.txt, applicable privacy laws, including India's DPDP Act, and all local regulations.
+
+Do not use this Actor to collect, store, sell, or misuse personal data without a lawful basis. The Actor author is not responsible for misuse by end users.
+
 ## License
 
 Apache-2.0
