@@ -34,7 +34,13 @@ const baseHost = 'https://api.coingecko.com/api/v3';
 const headers: Record<string, string> = { 'User-Agent': 'apify-coingecko-scraper', Accept: 'application/json' };
 if (apiKey) headers['x-cg-demo-api-key'] = apiKey.trim();
 
+let scraped = 0;
+let spendingLimitReached = false;
+const seen = new Set<string>();
+
 async function cgFetch(path: string): Promise<any> {
+    if (spendingLimitReached) return null;
+
     const url = `${baseHost}${path}`;
     for (let attempt = 0; attempt < 5; attempt++) {
         let dispatcher: ProxyAgent | undefined;
@@ -71,22 +77,35 @@ for (const q of queries) {
     log.info(`Search "${q}" -> ${matches.length} selected coin(s) from ${coins.length} match(es)`);
 }
 
-let scraped = 0;
-const seen = new Set<string>();
-
 async function pushCoins(list: any[]): Promise<void> {
     for (const c of list) {
-        if (!c?.id || seen.has(c.id)) continue;
-        seen.add(c.id);
-        await Actor.pushData(mapCoin(c, vs));
-        await Actor.charge({ eventName: 'coin-scraped' }).catch(() => null);
-        scraped++;
+        if (spendingLimitReached) return;
+
+        const coinId = typeof c?.id === 'string' ? c.id.toLowerCase() : '';
+        if (!coinId || seen.has(coinId)) continue;
+
+        const chargeResult = await Actor.pushData(mapCoin(c, vs), 'coin-scraped');
+        seen.add(coinId);
+        const recordWasSaved = chargeResult.chargedCount > 0 || !chargeResult.eventChargeLimitReached;
+        if (recordWasSaved) {
+            scraped += 1;
+        }
+
+        if (chargeResult.eventChargeLimitReached) {
+            spendingLimitReached = true;
+            const message = `Stopped at the user's spending limit after ${scraped} coin(s).`;
+            await Actor.setStatusMessage(message);
+            log.warning(message);
+            return;
+        }
     }
 }
 
 // Specific coin ids (batched, up to 250 per request).
 const idArray = [...allIds];
 for (let i = 0; i < idArray.length; i += 250) {
+    if (spendingLimitReached) break;
+
     const batch = idArray.slice(i, i + 250);
     const data = await cgFetch(`/coins/markets?vs_currency=${vs}&ids=${batch.join(',')}&order=market_cap_desc&per_page=250&page=1&price_change_percentage=24h`);
     if (Array.isArray(data)) await pushCoins(data);
@@ -94,10 +113,12 @@ for (let i = 0; i < idArray.length; i += 250) {
 }
 
 // Top coins by market cap.
-if (topCoins && topCoins > 0) {
+if (!spendingLimitReached && topCoins && topCoins > 0) {
     const perPage = 250;
     const pages = Math.ceil(Math.min(topCoins, 10000) / perPage);
     for (let page = 1; page <= pages; page++) {
+        if (spendingLimitReached) break;
+
         const data = await cgFetch(`/coins/markets?vs_currency=${vs}&order=market_cap_desc&per_page=${perPage}&page=${page}&price_change_percentage=24h`);
         if (!Array.isArray(data) || data.length === 0) break;
         const slice = data.slice(0, Math.max(0, topCoins - (page - 1) * perPage));
@@ -107,5 +128,8 @@ if (topCoins && topCoins > 0) {
     }
 }
 
-log.info(`CoinGecko scrape finished. ${scraped} coins scraped.`);
+if (!spendingLimitReached) {
+    await Actor.setStatusMessage(`Finished with ${scraped} unique coin(s).`);
+    log.info(`CoinGecko scrape finished. ${scraped} unique coin(s) saved.`);
+}
 await Actor.exit();

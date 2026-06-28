@@ -7,6 +7,7 @@
   "categories": ["DEVELOPER_TOOLS", "AUTOMATION", "OTHER"],
   "dockerfile": "Dockerfile",
   "input": "../INPUT_SCHEMA.json",
+  "output": "./output_schema.json",
   "storages": {
     "dataset": {
       "actorSpecification": 1,

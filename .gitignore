@@ -5,6 +5,7 @@ storage/
 apify_storage/
 crawlee_storage/
 tmp/
+.kiro/
 *.log
 .env
 .env.*

@@ -12,7 +12,8 @@ The Actor returns current price, market cap, rank, 24-hour volume and price move
 - Quote currencies including USD, EUR, INR, and BTC
 - Automatic deduplication across all input modes
 - Optional proxy rotation for rate-limited large runs
-- Pay only after a clean coin record is saved
+- Atomic save-and-charge billing for each clean coin record
+- Automatic stop before later batches or pages when the spending limit is reached
 
 ## Input
 
@@ -87,7 +88,7 @@ The Actor returns current price, market cap, rank, 24-hour volume and price move
 |---|---|
 | `coin-scraped` | $0.001 per successfully saved coin |
 
-The Actor charges only for records written to the dataset. Apify platform usage is billed separately.
+Each unique coin is saved and charged atomically. Duplicate coins are skipped, and the Actor stops further batches and pages when the user's spending limit is reached. Optional proxy usage remains disabled by default.
 
 ## Data source
 
