@@ -4,10 +4,15 @@
   "title": "CoinGecko Crypto Scraper - Prices & Market Data",
   "description": "Scrape cryptocurrency market data from CoinGecko: prices, market cap, rank, volume, 24h change, supply, ATH/ATL. By coin, search, or top by market cap. No API key needed.",
   "version": "1.0",
-  "categories": ["DEVELOPER_TOOLS", "AUTOMATION", "OTHER"],
+  "categories": ["BUSINESS", "DEVELOPER_TOOLS", "OTHER"],
   "dockerfile": "Dockerfile",
   "input": "../INPUT_SCHEMA.json",
+  "readme": "../README.md",
   "output": "./output_schema.json",
+  "exampleRunInput": {
+    "body": "{\"coinIds\":[\"bitcoin\"],\"searchQueries\":[],\"maxSearchResults\":2,\"topCoins\":0,\"vsCurrency\":\"usd\",\"apiKey\":\"\",\"proxyConfiguration\":{\"useApifyProxy\":false}}",
+    "contentType": "application/json; charset=utf-8"
+  },
   "storages": {
     "dataset": {
       "actorSpecification": 1,
@@ -49,9 +54,17 @@
     "pricingModel": "PAY_PER_EVENT",
     "pricingPerEvent": {
       "actorChargeEvents": {
+        "apify-actor-start": {
+          "eventTitle": "Actor Start",
+          "eventDescription": "Charged when the Actor starts running. Number of events charged depends on Actor memory (one event per GB, minimum one event).",
+          "isOneTimeEvent": true,
+          "eventPriceUsd": 0.00005
+        },
         "coin-scraped": {
           "eventTitle": "Coin Scraped",
           "eventDescription": "Charged for each cryptocurrency's market data extracted and saved to the dataset.",
+          "isOneTimeEvent": false,
+          "isPrimaryEvent": true,
           "eventPriceUsd": 0.001
         }
       }

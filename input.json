@@ -5,5 +5,7 @@
   "topCoins": 0,
   "vsCurrency": "usd",
   "apiKey": "",
-  "proxyConfiguration": { "useApifyProxy": false }
+  "proxyConfiguration": {
+    "useApifyProxy": false
+  }
 }

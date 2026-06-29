@@ -7,10 +7,10 @@ await Actor.init();
 
 const input = ((await Actor.getInput<ActorInput>()) ?? {}) as ActorInput;
 const {
-    coinIds = [],
+    coinIds = ['bitcoin'],
     searchQueries = [],
-    maxSearchResults = 5,
-    topCoins = 10,
+    maxSearchResults = 2,
+    topCoins = 0,
     vsCurrency = 'usd',
     apiKey = '',
     proxyConfiguration: proxyInput,
