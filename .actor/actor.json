@@ -2,7 +2,7 @@
   "actorSpecification": 1,
   "name": "coingecko-crypto-scraper",
   "title": "CoinGecko Crypto Scraper - Prices & Market Data",
-  "description": "Scrape cryptocurrency market data from CoinGecko: prices, market cap, rank, volume, 24h change, supply, ATH/ATL. By coin, search, or top by market cap. No API key needed.",
+  "description": "Fetch structured CoinGecko market data: price, market cap, rank, volume, 24h change, supply, ATH/ATL, and source links. Search by coin ID/name or top market cap; BYO API key for production use.",
   "version": "1.0",
   "categories": ["BUSINESS", "DEVELOPER_TOOLS", "OTHER"],
   "dockerfile": "Dockerfile",
@@ -10,7 +10,7 @@
   "readme": "../README.md",
   "output": "./output_schema.json",
   "exampleRunInput": {
-    "body": "{\"coinIds\":[\"bitcoin\"],\"searchQueries\":[],\"maxSearchResults\":2,\"topCoins\":0,\"vsCurrency\":\"usd\",\"apiKey\":\"\",\"proxyConfiguration\":{\"useApifyProxy\":false}}",
+    "body": "{\"coinIds\":[\"bitcoin\"],\"searchQueries\":[],\"maxSearchResults\":2,\"topCoins\":0,\"vsCurrency\":\"usd\",\"apiAccess\":\"keyless\",\"apiKey\":\"\",\"proxyConfiguration\":{\"useApifyProxy\":false}}",
     "contentType": "application/json; charset=utf-8"
   },
   "storages": {
@@ -20,7 +20,7 @@
         "coins": {
           "title": "Coins",
           "transformation": {
-            "fields": ["imageUrl", "marketCapRank", "id", "name", "symbol", "currentPrice", "vsCurrency", "marketCap", "totalVolume", "priceChangePercentage24h", "high24h", "low24h", "circulatingSupply", "maxSupply", "ath", "athDate", "atl", "lastUpdated", "scrapedAt"]
+            "fields": ["imageUrl", "marketCapRank", "id", "name", "symbol", "currentPrice", "vsCurrency", "marketCap", "totalVolume", "priceChangePercentage24h", "high24h", "low24h", "circulatingSupply", "maxSupply", "ath", "athDate", "atl", "lastUpdated", "coinGeckoUrl", "attribution", "scrapedAt"]
           },
           "display": {
             "component": "table",
@@ -43,6 +43,8 @@
               "athDate": { "label": "ATH Date", "format": "date" },
               "atl": { "label": "ATL", "format": "number" },
               "lastUpdated": { "label": "Last Updated", "format": "date" },
+              "coinGeckoUrl": { "label": "CoinGecko URL", "format": "link" },
+              "attribution": { "label": "Attribution", "format": "text" },
               "scrapedAt": { "label": "Scraped At", "format": "text" }
             }
           }

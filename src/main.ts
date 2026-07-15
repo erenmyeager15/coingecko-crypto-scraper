@@ -1,135 +1,80 @@
 import { Actor, log } from 'apify';
-import { ProxyAgent } from 'undici';
-import type { ActorInput } from './types.js';
-import { mapCoin } from './routes.js';
+import { CoinGeckoClient } from './coingecko.js';
+import { InputError, normalizeInput } from './input.js';
+import { runScrape } from './scraper.js';
+import type { NormalizedInput, RunStatus } from './types.js';
 
-await Actor.init();
-
-const input = ((await Actor.getInput<ActorInput>()) ?? {}) as ActorInput;
-const {
-    coinIds = ['bitcoin'],
-    searchQueries = [],
-    maxSearchResults = 2,
-    topCoins = 0,
-    vsCurrency = 'usd',
-    apiKey = '',
-    proxyConfiguration: proxyInput,
-} = input;
-
-const vs = (vsCurrency || 'usd').toLowerCase();
-const ids = [...new Set(coinIds.map((c) => c.trim().toLowerCase()).filter(Boolean))];
-const queries = searchQueries.map((q) => q.trim()).filter(Boolean);
-
-if (ids.length === 0 && queries.length === 0 && (!topCoins || topCoins <= 0)) {
-    log.error('No input. Provide coinIds, searchQueries, or a topCoins count.');
-    await Actor.exit();
+function failedStatus(input: NormalizedInput | undefined, error: unknown, startedAt: Date): RunStatus {
+    const finishedAt = new Date();
+    const message = error instanceof Error ? error.message.slice(0, 300) : 'Unexpected error.';
+    return {
+        outcome: 'failed',
+        summary: message,
+        source: 'CoinGecko API',
+        apiAccess: input?.apiAccess ?? 'keyless',
+        attribution: 'Data provided by CoinGecko',
+        input: {
+            explicitCoinIds: input?.coinIds.length ?? 0,
+            searchQueries: input?.searchQueries.length ?? 0,
+            topCoins: input?.topCoins ?? 0,
+            maxSearchResults: input?.maxSearchResults ?? 0,
+            vsCurrency: input?.vsCurrency ?? 'unknown',
+            potentialResults: input?.potentialResults ?? 0,
+        },
+        requests: { attempted: 0, succeeded: 0, failed: 0, retries: 0, rateLimited: 0, timedOut: 0 },
+        search: { attempted: 0, succeeded: 0, failed: 0, matchesSelected: 0, noMatches: 0, invalidMatches: 0 },
+        records: { received: 0, saved: 0, invalid: 0, duplicate: 0, noMatchRequestedIds: 0 },
+        spendingLimitReached: false,
+        diagnostics: [{
+            code: error instanceof InputError ? error.code : 'unexpected_error',
+            message,
+            scope: error instanceof InputError ? 'input' : 'runtime',
+        }],
+        startedAt: startedAt.toISOString(),
+        finishedAt: finishedAt.toISOString(),
+        durationMs: Math.max(0, finishedAt.getTime() - startedAt.getTime()),
+    };
 }
 
-const proxyConfiguration = (proxyInput?.useApifyProxy || proxyInput?.proxyUrls?.length)
-    ? await Actor.createProxyConfiguration(proxyInput)
-    : undefined;
+async function persistStatus(status: RunStatus): Promise<void> {
+    await Actor.setValue('RUN_STATUS', status);
+    await Actor.setStatusMessage(status.summary);
+}
 
-// CoinGecko Demo API keys use the api.coingecko.com host with a header.
-const baseHost = 'https://api.coingecko.com/api/v3';
-const headers: Record<string, string> = { 'User-Agent': 'apify-coingecko-scraper', Accept: 'application/json' };
-if (apiKey) headers['x-cg-demo-api-key'] = apiKey.trim();
-
-let scraped = 0;
-let spendingLimitReached = false;
-const seen = new Set<string>();
-
-async function cgFetch(path: string): Promise<any> {
-    if (spendingLimitReached) return null;
-
-    const url = `${baseHost}${path}`;
-    for (let attempt = 0; attempt < 5; attempt++) {
-        let dispatcher: ProxyAgent | undefined;
-        if (proxyConfiguration) {
-            const purl = await proxyConfiguration.newUrl();
-            if (purl) dispatcher = new ProxyAgent(purl);
-        }
-        try {
-            const res = await fetch(url, { headers, ...(dispatcher ? { dispatcher } : {}) } as any);
-            if (res.status === 429) {
-                log.warning(`Rate limited (429) - attempt ${attempt + 1}`);
-                if (!proxyConfiguration) await new Promise((r) => setTimeout(r, 3000 * (attempt + 1)));
-                continue;
-            }
-            if (!res.ok) {
-                log.warning(`HTTP ${res.status} on ${path}`);
-                return null;
-            }
-            return await res.json();
-        } catch (e) {
-            log.warning(`Request error on ${path}: ${(e as Error).message}`);
-        }
+await Actor.main(async () => {
+    const startedAt = new Date();
+    let input: NormalizedInput | undefined;
+    try {
+        input = normalizeInput((await Actor.getInput<unknown>()) ?? {});
+    } catch (error) {
+        const status = failedStatus(undefined, error, startedAt);
+        await persistStatus(status);
+        throw error;
     }
-    return null;
-}
 
-// Resolve search queries -> coin ids.
-const allIds = new Set<string>(ids);
-for (const q of queries) {
-    const data = await cgFetch(`/search?query=${encodeURIComponent(q)}`);
-    const coins: any[] = data?.coins ?? [];
-    const matches = coins.slice(0, Math.max(1, Math.min(maxSearchResults, 50)));
-    for (const c of matches) if (c.id) allIds.add(c.id);
-    log.info(`Search "${q}" -> ${matches.length} selected coin(s) from ${coins.length} match(es)`);
-}
+    const client = new CoinGeckoClient({
+        apiAccess: input.apiAccess,
+        apiKey: input.apiKey,
+    });
 
-async function pushCoins(list: any[]): Promise<void> {
-    for (const c of list) {
-        if (spendingLimitReached) return;
-
-        const coinId = typeof c?.id === 'string' ? c.id.toLowerCase() : '';
-        if (!coinId || seen.has(coinId)) continue;
-
-        const chargeResult = await Actor.pushData(mapCoin(c, vs), 'coin-scraped');
-        seen.add(coinId);
-        const recordWasSaved = chargeResult.chargedCount > 0 || !chargeResult.eventChargeLimitReached;
-        if (recordWasSaved) {
-            scraped += 1;
-        }
-
-        if (chargeResult.eventChargeLimitReached) {
-            spendingLimitReached = true;
-            const message = `Stopped at the user's spending limit after ${scraped} coin(s).`;
-            await Actor.setStatusMessage(message);
-            log.warning(message);
-            return;
-        }
+    let status: RunStatus;
+    try {
+        status = await runScrape(input, {
+            client,
+            log,
+            pushRecord: async (record) => {
+                const result = await Actor.pushData(record, 'coin-scraped');
+                return {
+                    saved: result.chargedCount > 0 || !result.eventChargeLimitReached,
+                    limitReached: result.eventChargeLimitReached,
+                };
+            },
+        });
+    } catch (error) {
+        status = failedStatus(input, error, startedAt);
     }
-}
 
-// Specific coin ids (batched, up to 250 per request).
-const idArray = [...allIds];
-for (let i = 0; i < idArray.length; i += 250) {
-    if (spendingLimitReached) break;
-
-    const batch = idArray.slice(i, i + 250);
-    const data = await cgFetch(`/coins/markets?vs_currency=${vs}&ids=${batch.join(',')}&order=market_cap_desc&per_page=250&page=1&price_change_percentage=24h`);
-    if (Array.isArray(data)) await pushCoins(data);
-    log.info(`Fetched ${batch.length} requested coin(s)`);
-}
-
-// Top coins by market cap.
-if (!spendingLimitReached && topCoins && topCoins > 0) {
-    const perPage = 250;
-    const pages = Math.ceil(Math.min(topCoins, 10000) / perPage);
-    for (let page = 1; page <= pages; page++) {
-        if (spendingLimitReached) break;
-
-        const data = await cgFetch(`/coins/markets?vs_currency=${vs}&order=market_cap_desc&per_page=${perPage}&page=${page}&price_change_percentage=24h`);
-        if (!Array.isArray(data) || data.length === 0) break;
-        const slice = data.slice(0, Math.max(0, topCoins - (page - 1) * perPage));
-        await pushCoins(slice);
-        log.info(`Top coins page ${page}: ${slice.length} coins (total ${scraped})`);
-        if (data.length < perPage) break;
-    }
-}
-
-if (!spendingLimitReached) {
-    await Actor.setStatusMessage(`Finished with ${scraped} unique coin(s).`);
-    log.info(`CoinGecko scrape finished. ${scraped} unique coin(s) saved.`);
-}
-await Actor.exit();
+    await persistStatus(status);
+    log.info(status.summary);
+    if (status.outcome === 'failed') throw new Error(status.summary);
+});

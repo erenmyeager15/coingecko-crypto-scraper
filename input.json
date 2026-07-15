@@ -4,6 +4,7 @@
   "maxSearchResults": 2,
   "topCoins": 0,
   "vsCurrency": "usd",
+  "apiAccess": "keyless",
   "apiKey": "",
   "proxyConfiguration": {
     "useApifyProxy": false

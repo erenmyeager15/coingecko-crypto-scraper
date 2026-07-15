@@ -1,60 +1,86 @@
 {
   "title": "CoinGecko Crypto Scraper",
-  "description": "Scrape cryptocurrency market data from CoinGecko by coin ID, search query, or top coins by market cap. No API key required (optional Demo key for higher limits).",
+  "description": "Fetch structured cryptocurrency market data from the official CoinGecko API by coin ID, search query, or market-cap rank. Keyless access is limited to tiny evaluations; use your own appropriately licensed API key for larger or commercial workflows.",
   "type": "object",
   "schemaVersion": 1,
+  "additionalProperties": false,
   "properties": {
     "coinIds": {
       "title": "Coin IDs",
-      "description": "CoinGecko coin IDs (e.g. \"bitcoin\", \"ethereum\", \"solana\").",
+      "description": "Official CoinGecko coin IDs such as bitcoin, ethereum, or solana. Coin names and ticker symbols belong in Search Queries.",
       "type": "array",
       "editor": "stringList",
       "prefill": ["bitcoin"],
-      "default": ["bitcoin"]
+      "default": ["bitcoin"],
+      "maxItems": 1000,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128,
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$"
+      }
     },
     "searchQueries": {
       "title": "Search Queries",
-      "description": "Coin names/symbols to look up and resolve to coin IDs (e.g. \"bitcoin\", \"doge\").",
+      "description": "Coin names or symbols to resolve through CoinGecko search. At most 10 queries per run.",
       "type": "array",
       "editor": "stringList",
-      "default": []
+      "default": [],
+      "maxItems": 10,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 100
+      }
     },
     "maxSearchResults": {
       "title": "Max Results per Search",
-      "description": "Maximum number of relevant CoinGecko matches selected for each search query.",
+      "description": "Maximum CoinGecko matches selected from each search query.",
       "type": "integer",
       "editor": "number",
       "default": 2,
       "minimum": 1,
-      "maximum": 50
+      "maximum": 20
     },
     "topCoins": {
       "title": "Top Coins by Market Cap",
-      "description": "Number of top coins (by market cap) to scrape. Set to 0 to scrape only the specified coins/searches.",
+      "description": "Number of top market-cap coins to fetch. Set 0 to use only coin IDs and searches.",
       "type": "integer",
       "editor": "number",
       "prefill": 0,
       "default": 0,
       "minimum": 0,
-      "maximum": 10000
+      "maximum": 1000
     },
     "vsCurrency": {
       "title": "Quote Currency",
-      "description": "Currency to quote prices in (e.g. \"usd\", \"eur\", \"inr\", \"btc\").",
+      "description": "CoinGecko quote-currency code such as usd, eur, inr, btc, or sats. The Actor validates it against CoinGecko before fetching market rows.",
       "type": "string",
       "editor": "textfield",
-      "default": "usd"
+      "default": "usd",
+      "minLength": 2,
+      "maxLength": 16,
+      "pattern": "^[A-Za-z0-9-]{2,16}$"
+    },
+    "apiAccess": {
+      "title": "CoinGecko API Access",
+      "description": "Keyless is for tiny evaluation runs. Demo requires a free Demo key. Pro uses the paid API host and is the appropriate mode for a CoinGecko plan that permits your production/commercial use.",
+      "type": "string",
+      "editor": "select",
+      "default": "keyless",
+      "enum": ["keyless", "demo", "pro"],
+      "enumTitles": ["Keyless public API (evaluation only)", "Demo API key", "Paid Pro API key"]
     },
     "apiKey": {
-      "title": "CoinGecko API Key (optional)",
-      "description": "A CoinGecko Demo API key raises rate limits. Leave empty to use the free public API.",
+      "title": "CoinGecko API Key",
+      "description": "Required for Demo or Pro access. The key is sent only in CoinGecko's documented request header and is never written to output or logs.",
       "type": "string",
       "editor": "textfield",
       "isSecret": true
     },
     "proxyConfiguration": {
-      "title": "Proxy Configuration",
-      "description": "Optional proxy settings. Keep disabled for normal runs; enable rotation only when rate limits require it.",
+      "title": "Legacy Proxy Configuration",
+      "description": "Keep disabled. Proxy rotation is not supported because it must not be used to bypass CoinGecko rate limits.",
       "type": "object",
       "editor": "proxy",
       "default": { "useApifyProxy": false }

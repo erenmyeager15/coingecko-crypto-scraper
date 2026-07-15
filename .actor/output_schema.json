@@ -1,14 +1,20 @@
 {
   "actorOutputSchemaVersion": 1,
   "title": "CoinGecko Crypto Scraper Output",
-  "description": "Structured cryptocurrency market records with coin IDs, symbols, names, prices, market caps, ranks, volumes, 24-hour changes, supplies, ATH/ATL values, image URLs, update times, and scraped timestamps.",
+  "description": "Structured cryptocurrency market records from the official CoinGecko API, plus machine-readable run diagnostics.",
   "type": "object",
   "properties": {
     "results": {
       "type": "string",
       "title": "CoinGecko market records",
-      "description": "Clean dataset items containing public cryptocurrency price, rank, market-cap, volume, supply, change, ATH/ATL, image, and update data.",
+      "description": "Normalized coin identity, price, market-cap, volume, supply, ATH/ATL, source URL, attribution, and update fields.",
       "template": "{{links.apiDefaultDatasetUrl}}/items"
+    },
+    "runStatus": {
+      "type": "string",
+      "title": "Run status and diagnostics",
+      "description": "Outcome, request/retry/rate-limit counters, search and record counts, partial-failure diagnostics, and spending-limit state.",
+      "template": "{{links.apiDefaultKeyValueStoreUrl}}/records/RUN_STATUS"
     }
   }
 }
